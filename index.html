@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Avalia.Serv</title>
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/modals.css">
+<link rel="stylesheet" href="css/forms.css">
+<link rel="stylesheet" href="css/layout.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/responsive.css">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- ═══ LOGIN ═══ -->
+<div id="login-modal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-brand"><div class="brand-icon">⚡</div><h2>Avalia.Serv</h2><p>Entre na sua conta</p></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">E-mail</label><input type="email" id="login-email" class="form-input" placeholder="seu@email.com"></div>
+      <div class="form-group"><label class="form-label">Senha</label><input type="password" id="login-password" class="form-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')loginUser()"></div>
+      <button class="btn-primary w-full" onclick="loginUser()">Entrar</button>
+      <div class="divider"><span>ou</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:.85rem">
+        <a href="#" onclick="showSignup()" class="link">Criar conta grátis</a>
+        <a href="#" onclick="showForgotPassword()" class="link" style="color:var(--text-3)">Esqueci a senha</a>
+      </div>
+      <div id="login-message" class="form-message"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ESQUECI SENHA ═══ -->
+<div id="forgot-modal" class="modal-overlay hidden">
+  <div class="modal-box">
+    <div class="modal-header-row"><h2>🔑 Recuperar Senha</h2><button class="modal-close" onclick="closeModal('forgot-modal')">✕</button></div>
+    <div class="modal-body">
+      <!-- Passo 1: e-mail -->
+      <div id="forgot-step-email">
+        <p style="font-size:.88rem;color:var(--text-2);margin-bottom:1rem">Informe seu e-mail. Enviaremos um código de verificação.</p>
+        <div class="form-group"><label class="form-label">E-mail cadastrado</label><input type="email" id="forgot-email" class="form-input" placeholder="seu@email.com"></div>
+        <button class="btn-primary w-full" style="margin-top:.8rem" onclick="sendPasswordReset()">Enviar Código</button>
+      </div>
+      <!-- Passo 2: token -->
+      <div id="forgot-step-token" class="hidden">
+        <input type="hidden" id="forgot-token-email">
+        <p style="font-size:.88rem;color:var(--text-2);margin-bottom:1rem">Digite o código de 6 dígitos enviado para seu e-mail.</p>
+        <div class="form-group"><label class="form-label">Código de verificação</label><input type="text" id="forgot-token-input" class="form-input" placeholder="000000" maxlength="6" style="letter-spacing:.3em;text-align:center;font-size:1.3rem"></div>
+        <button class="btn-primary w-full" style="margin-top:.8rem" onclick="verifyResetToken()">Verificar Código</button>
+      </div>
+      <!-- Passo 3: nova senha -->
+      <div id="forgot-step-newpass" class="hidden">
+        <p style="font-size:.88rem;color:var(--text-2);margin-bottom:1rem">Crie sua nova senha.</p>
+        <div class="form-group"><label class="form-label">Nova senha</label><input type="password" id="forgot-newpass" class="form-input" placeholder="Mínimo 6 caracteres"></div>
+        <div class="form-group" style="margin-top:.5rem"><label class="form-label">Confirmar senha</label><input type="password" id="forgot-newpass2" class="form-input" placeholder="Repita a senha"></div>
+        <button class="btn-primary w-full" style="margin-top:.8rem" onclick="saveNewPassword()">Salvar Nova Senha</button>
+      </div>
+      <div id="forgot-msg" class="form-message" style="margin-top:.8rem"></div>
+      <p style="text-align:center;margin-top:1rem;font-size:.85rem"><a href="#" onclick="showLogin()" class="link">← Voltar ao login</a></p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ CADASTRO ═══ -->
+<div id="signup-modal" class="modal-overlay hidden">
+  <div class="modal-box modal-box-wide">
+    <div class="modal-brand"><div class="brand-icon">⚡</div><h2>Criar Conta</h2><p>Escolha seu tipo de perfil</p></div>
+    <div class="modal-body">
+      <div class="account-type-selector">
+        <label class="account-type-card" id="card-client">
+          <input type="radio" name="account-type" value="client" checked onchange="toggleProfessionalFields(false)">
+          <div class="account-type-inner"><span class="account-icon">👤</span><strong>Cliente</strong><small>Quero contratar serviços</small></div>
+        </label>
+        <label class="account-type-card" id="card-professional">
+          <input type="radio" name="account-type" value="professional" onchange="toggleProfessionalFields(true)">
+          <div class="account-type-inner"><span class="account-icon">🔧</span><strong>Profissional</strong><small>Quero oferecer serviços</small></div>
+        </label>
+      </div>
+      <!-- Dados base -->
+      <div class="form-section">
+        <div class="section-title">📋 Dados Pessoais</div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Nome Completo *</label><input type="text" id="signup-name" class="form-input" placeholder="Seu nome completo"></div>
+          <div class="form-group"><label class="form-label">Data de Nascimento</label><input type="date" id="signup-birth" class="form-input"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">CPF</label><input type="text" id="signup-cpf" class="form-input" placeholder="000.000.000-00" maxlength="14"></div>
+          <div class="form-group"><label class="form-label">Gênero</label><select id="signup-gender" class="form-input"><option value="">Selecione</option><option>Masculino</option><option>Feminino</option><option>Não-binário</option><option>Prefiro não informar</option></select></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">E-mail *</label><input type="email" id="signup-email" class="form-input" placeholder="seu@email.com"></div>
+          <div class="form-group"><label class="form-label">Telefone</label><input type="tel" id="signup-phone-client" class="form-input" placeholder="(00) 90000-0000"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Senha *</label><input type="password" id="signup-password" class="form-input" placeholder="Mínimo 6 caracteres"></div>
+          <div class="form-group"><label class="form-label">Cidade / Estado</label><input type="text" id="signup-city-client" class="form-input" placeholder="Ex: Recife, PE"></div>
+        </div>
+      </div>
+      <!-- Campos de profissional -->
+      <div id="professional-fields" class="hidden">
+        <div class="form-section">
+          <div class="section-title">💼 Área Profissional</div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Categoria *</label>
+              <select id="signup-category" class="form-input">
+                <option value="">Selecione</option>
+                <option value="Manutenção">🔧 Manutenção</option><option value="Construção">🏗️ Construção</option>
+                <option value="Limpeza">🧹 Limpeza</option><option value="Tecnologia">💻 Tecnologia</option>
+                <option value="Saúde">🏥 Saúde</option><option value="Educação">📚 Educação</option>
+                <option value="Beleza">💇 Beleza</option><option value="Jardinagem">🌿 Jardinagem</option>
+                <option value="Segurança">🔒 Segurança</option><option value="Transporte">🚗 Transporte</option>
+                <option value="Alimentação">🍽️ Alimentação</option><option value="Advocacia">⚖️ Advocacia</option>
+                <option value="Contabilidade">📊 Contabilidade</option><option value="Arquitetura">🏛️ Arquitetura</option>
+                <option value="Eventos">🎉 Eventos</option><option value="Pets">🐾 Pets</option>
+              </select>
+            </div>
+            <div class="form-group"><label class="form-label">Função / Cargo *</label><input type="text" id="signup-function" class="form-input" placeholder="Ex: Eletricista, Dev Full Stack"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Especialidade</label><input type="text" id="signup-specialty" class="form-input" placeholder="Ex: Instalações Residenciais"></div>
+            <div class="form-group"><label class="form-label">Experiência *</label>
+              <select id="signup-experience" class="form-input"><option value="">Selecione</option><option>Menos de 1 ano</option><option>1-2 anos</option><option>3-5 anos</option><option>5-10 anos</option><option>Mais de 10 anos</option></select>
+            </div>
+          </div>
+          <div class="form-group"><label class="form-label">Descrição dos Serviços</label><textarea id="signup-description" class="form-input" rows="3" placeholder="Descreva o que você faz..."></textarea></div>
+        </div>
+        <div class="form-section">
+          <div class="section-title">📞 Contato Profissional</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">WhatsApp Profissional *</label>
+              <div id="ddi-signup-whatsapp-container"></div>
+              <small class="form-hint">Número exclusivo para clientes</small>
+            </div>
+            <div class="form-group"><label class="form-label">Localização de Atuação *</label><input type="text" id="signup-location" class="form-input" placeholder="Cidade, Estado"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Raio de Atuação</label>
+              <select id="signup-radius" class="form-input"><option value="">Selecione</option><option>5km</option><option>10km</option><option>20km</option><option>50km</option><option>100km</option><option>Regional</option><option>Estadual</option><option>Nacional</option><option>Remoto</option></select>
+            </div>
+            <div class="form-group"><label class="form-label">Disponibilidade</label>
+              <select id="signup-availability" class="form-input"><option value="">Selecione</option><option>Tempo Integral</option><option>Meio Período</option><option>Horário Comercial</option><option>Fins de Semana</option><option>24/7</option><option>Sob Demanda</option></select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Site / Portfólio</label><input type="url" id="signup-website" class="form-input" placeholder="https://"></div>
+            <div class="form-group"><label class="form-label">Instagram</label><input type="text" id="signup-instagram" class="form-input" placeholder="@usuario"></div>
+          </div>
+        </div>
+        <div class="form-section">
+          <div class="section-title">💰 Valores e Pagamento</div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Valor por Hora (R$)</label><input type="number" id="signup-hourly" class="form-input" placeholder="Ex: 80" min="0"></div>
+            <div class="form-group"><label class="form-label">Valor Mínimo (R$)</label><input type="number" id="signup-min-value" class="form-input" placeholder="Ex: 150" min="0"></div>
+          </div>
+          <div class="form-group"><label class="form-label">Formas de Pagamento</label>
+            <div class="checkbox-grid">
+              <label class="check-item"><input type="checkbox" value="Dinheiro"> 💵 Dinheiro</label>
+              <label class="check-item"><input type="checkbox" value="PIX"> 📲 PIX</label>
+              <label class="check-item"><input type="checkbox" value="Cartão Crédito"> 💳 Crédito</label>
+              <label class="check-item"><input type="checkbox" value="Cartão Débito"> 💳 Débito</label>
+              <label class="check-item"><input type="checkbox" value="Transferência"> 🏦 Transferência</label>
+              <label class="check-item"><input type="checkbox" value="Boleto"> 📄 Boleto</label>
+            </div>
+          </div>
+        </div>
+        <div class="form-section">
+          <div class="section-title">📜 Qualificações</div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Registro Profissional</label><input type="text" id="signup-register" class="form-input" placeholder="CREA / CRM / OAB..."></div>
+            <div class="form-group"><label class="form-label">Seguro Civil</label>
+              <select id="signup-insurance" class="form-input"><option value="">Selecione</option><option>Sim</option><option>Não</option><option>Em andamento</option></select>
+            </div>
+          </div>
+          <div class="form-group"><label class="form-label">Formações (separadas por vírgula)</label><input type="text" id="signup-formations" class="form-input" placeholder="Ex: Curso SENAI, MBA..."></div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Idiomas</label>
+              <div class="checkbox-grid">
+                <label class="check-item"><input type="checkbox" value="Português" checked> 🇧🇷 PT</label>
+                <label class="check-item"><input type="checkbox" value="Inglês"> 🇺🇸 EN</label>
+                <label class="check-item"><input type="checkbox" value="Espanhol"> 🇪🇸 ES</label>
+                <label class="check-item"><input type="checkbox" value="Francês"> 🇫🇷 FR</label>
+              </div>
+            </div>
+            <div class="form-group"><label class="form-label">Tipo de Atendimento</label>
+              <select id="signup-service-type" class="form-input"><option value="">Selecione</option><option>Presencial</option><option>Online / Remoto</option><option>Presencial e Remoto</option></select>
+            </div>
+          </div>
+          <div class="form-group"><label class="form-label">Transporte</label>
+            <select id="signup-transport" class="form-input"><option value="">Selecione</option><option>Carro Próprio</option><option>Moto</option><option>Bicicleta</option><option>Transporte Público</option><option>Trabalho Remoto</option></select>
+          </div>
+        </div>
+      </div>
+      <button class="btn-primary w-full" style="margin-top:1rem" onclick="registerUser()">Criar Conta</button>
+      <p style="text-align:center;margin-top:1rem;font-size:.85rem">Já tem conta? <a href="#" onclick="showLogin()" class="link">Faça login</a></p>
+      <div id="signup-message" class="form-message"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ APP PRINCIPAL ═══ -->
+<div id="main-content" class="hidden">
+  <div class="app-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="user-profile-card" onclick="openProfileModal()">
+        <div class="profile-avatar-wrapper">
+          <div class="profile-avatar" id="sidebar-avatar">U</div>
+          <div class="avatar-edit-btn">📷</div>
+        </div>
+        <div class="profile-info">
+          <div class="profile-name" id="sidebar-name">Usuário</div>
+          <div class="profile-email" id="sidebar-email"></div>
+          <div class="profile-badge" id="sidebar-type">Cliente</div>
+        </div>
+      </div>
+
+      <!-- Nav Cliente -->
+      <nav class="sidebar-nav" id="nav-client-section">
+        <button class="nav-item active" onclick="setNavActive(this);showSection('explore')">🔍 <span>Explorar</span></button>
+        <button class="nav-item" onclick="setNavActive(this);showSection('favorites')">❤️ <span>Favoritos</span></button>
+        <button class="nav-item" onclick="setNavActive(this);showSection('requests')">📋 <span>Minhas Solicitações</span></button>
+        <button class="nav-item" onclick="openNewRequestModal()">➕ <span>Nova Solicitação</span></button>
+      </nav>
+
+      <!-- Nav Profissional -->
+      <nav class="sidebar-nav hidden" id="nav-prof-section">
+        <button class="nav-item active" onclick="setNavActive(this);showProfSection('requests')">📋 <span>Solicitações de Clientes</span></button>
+        <button class="nav-item" onclick="setNavActive(this);showProfSection('chats')">💬 <span>Minhas Conversas</span></button>
+      </nav>
+
+      <div class="sidebar-actions">
+        <button class="btn-ghost" id="theme-toggle" onclick="toggleTheme()">🌙 Tema Escuro</button>
+        <button class="btn-ghost" onclick="openProfileModal()">✏️ Editar Perfil</button>
+        <button class="btn-ghost danger" onclick="logout()">🚪 Sair</button>
+        <button class="btn-ghost danger" onclick="confirmDeleteAccount()" style="font-size:.78rem;opacity:.7">🗑️ Excluir conta</button>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main-area">
+
+      <!-- ── VIEW CLIENTE ── -->
+      <div id="client-view" class="hidden">
+        <header class="app-header">
+          <div class="header-logo">⚡ Avalia.Serv</div>
+          <p class="header-sub">Encontre profissionais de confiança perto de você</p>
+        </header>
+
+        <!-- Filtros -->
+        <section class="filters-section">
+          <div class="search-bar">
+            <span class="search-icon-inside">🔍</span>
+            <input type="text" id="search-input" class="search-input" placeholder="Buscar por nome, especialidade...">
+          </div>
+          <div class="filters-row">
+            <select id="category-filter" class="filter-select" onchange="renderProfessionals()">
+              <option value="">Todas as Categorias</option>
+              <option value="Manutenção">🔧 Manutenção</option><option value="Construção">🏗️ Construção</option>
+              <option value="Limpeza">🧹 Limpeza</option><option value="Tecnologia">💻 Tecnologia</option>
+              <option value="Saúde">🏥 Saúde</option><option value="Educação">📚 Educação</option>
+              <option value="Beleza">💇 Beleza</option><option value="Jardinagem">🌿 Jardinagem</option>
+            </select>
+            <select id="city-filter" class="filter-select" onchange="renderProfessionals()">
+              <option value="">Todas as Cidades</option>
+              <option>São Paulo</option><option>Rio de Janeiro</option><option>Belo Horizonte</option>
+              <option>Recife</option><option>Salvador</option><option>Fortaleza</option><option>Curitiba</option>
+            </select>
+            <select id="avail-filter" class="filter-select" onchange="renderProfessionals()">
+              <option value="">Disponibilidade</option>
+              <option>Tempo Integral</option><option>Fins de Semana</option><option>24/7</option>
+            </select>
+          </div>
+        </section>
+
+        <!-- Seção explorar -->
+        <section id="section-explore">
+          <div class="section-heading"><h2>Profissionais Disponíveis</h2><span id="results-count" class="badge-count">0</span></div>
+          <div class="professionals-grid" id="professionals-list"></div>
+        </section>
+
+        <!-- Seção favoritos -->
+        <section id="section-favorites" class="hidden">
+          <div class="section-heading"><h2>❤️ Favoritos</h2></div>
+          <div class="professionals-grid" id="favorites-list"></div>
+        </section>
+
+        <!-- Seção solicitações do cliente -->
+        <section id="section-my-requests" class="hidden">
+          <div class="section-heading">
+            <h2>📋 Minhas Solicitações</h2>
+            <button class="btn-primary" style="font-size:.82rem;padding:.45rem 1rem" onclick="openNewRequestModal()">+ Nova</button>
+          </div>
+          <div style="padding:0 2.5rem 2rem" id="my-requests-list"></div>
+        </section>
+      </div>
+
+      <!-- ── VIEW PROFISSIONAL ── -->
+      <div id="professional-view" class="hidden">
+        <header class="app-header" style="background:linear-gradient(135deg,#064e3b,#065f46,#0ea5e9)">
+          <div class="header-logo">🔧 Painel do Profissional</div>
+          <p class="header-sub">Veja clientes à procura de serviços como o seu</p>
+        </header>
+
+        <!-- Seção solicitações dos clientes -->
+        <section id="prof-section-requests">
+          <div class="section-heading" style="padding:1.5rem 2.5rem 0.5rem">
+            <h2>📋 Solicitações de Clientes</h2>
+          </div>
+          <div style="padding:0 2.5rem .8rem;display:flex;gap:.8rem">
+            <select id="prof-cat-filter" class="filter-select" onchange="renderClientRequests()">
+              <option value="">Todas as Categorias</option>
+              <option value="Manutenção">🔧 Manutenção</option><option value="Construção">🏗️ Construção</option>
+              <option value="Tecnologia">💻 Tecnologia</option><option value="Saúde">🏥 Saúde</option>
+              <option value="Beleza">💇 Beleza</option><option value="Educação">📚 Educação</option>
+            </select>
+          </div>
+          <div style="padding:0 2.5rem 2.5rem" id="client-requests-list"></div>
+        </section>
+
+        <!-- Seção conversas do profissional -->
+        <section id="prof-section-chats" class="hidden">
+          <div class="section-heading" style="padding:1.5rem 2.5rem 1rem"><h2>💬 Minhas Conversas</h2></div>
+          <div style="padding:0 2.5rem 2.5rem" id="prof-chats-list"></div>
+        </section>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- ═══ MODAL NOVA SOLICITAÇÃO ═══ -->
+<div id="new-request-modal" class="modal-overlay hidden">
+  <div class="modal-box">
+    <div class="modal-header-row"><h2>➕ Nova Solicitação</h2><button class="modal-close" onclick="closeModal('new-request-modal')">✕</button></div>
+    <div class="modal-body">
+      <p style="font-size:.88rem;color:var(--text-2);margin-bottom:1rem">Descreva o problema ou serviço que precisa. Profissionais qualificados entrarão em contato.</p>
+      <div class="form-group"><label class="form-label">Título *</label><input type="text" id="req-title" class="form-input" placeholder="Ex: Vazamento no banheiro, Site com bug..."></div>
+      <div class="form-group" style="margin-top:.6rem"><label class="form-label">Descrição do Problema *</label>
+        <textarea id="req-desc" class="form-input" rows="4" placeholder="Detalhe o problema: onde está, quando começou, o que já foi tentado..."></textarea>
+      </div>
+      <div class="form-row" style="margin-top:.6rem">
+        <div class="form-group"><label class="form-label">Categoria</label>
+          <select id="req-category" class="form-input"><option value="">Geral</option>
+            <option value="Manutenção">Manutenção</option><option value="Construção">Construção</option>
+            <option value="Tecnologia">Tecnologia</option><option value="Saúde">Saúde</option>
+            <option value="Beleza">Beleza</option><option value="Educação">Educação</option></select>
+        </div>
+        <div class="form-group"><label class="form-label">Orçamento disponível (R$)</label><input type="number" id="req-budget" class="form-input" placeholder="Ex: 200" min="0"></div>
+      </div>
+      <button class="btn-primary w-full" style="margin-top:1rem" onclick="submitRequest()">Publicar Solicitação</button>
+      <div id="req-msg" class="form-message"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL PERFIL DO CLIENTE (visto pelo profissional) ═══ -->
+<div id="client-profile-modal" class="modal-overlay hidden">
+  <div class="modal-box modal-box-wide">
+    <div class="modal-header-row"><h2 id="cpm-title">Perfil do Cliente</h2><button class="modal-close" onclick="closeModal('client-profile-modal')">✕</button></div>
+    <div class="modal-body" id="client-profile-modal-body"></div>
+  </div>
+</div>
+
+<!-- ═══ MODAL CHAT ═══ -->
+<div id="chat-modal" class="modal-overlay hidden">
+  <div class="modal-box" style="max-width:500px;display:flex;flex-direction:column;max-height:90vh">
+    <div class="chat-modal-header">
+      <div>
+        <div id="chat-modal-title" style="font-weight:700;font-size:1rem"></div>
+        <div id="chat-other-name" style="font-size:.78rem;color:var(--text-3)"></div>
+        <div id="chat-request-ref" style="font-size:.75rem;color:var(--text-3)"></div>
+      </div>
+      <button class="modal-close" onclick="closeChatModal()">✕</button>
+    </div>
+    <div id="chat-messages" class="chat-messages"></div>
+    <div class="chat-input-bar">
+      <input type="text" id="chat-input" class="chat-input" placeholder="Digite sua mensagem... (Enter para enviar)">
+      <button class="chat-send-btn" id="chat-send-btn" onclick="sendChatMessage()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL PROFISSIONAL ═══ -->
+<div id="professional-modal" class="modal-overlay hidden">
+  <div class="modal-box modal-box-wide">
+    <div class="modal-header-row"><h2 id="prof-modal-name">Perfil</h2><button class="modal-close" onclick="closeModal('professional-modal')">✕</button></div>
+    <div class="modal-body" id="professional-modal-body"></div>
+  </div>
+</div>
+
+<!-- ═══ MODAL EDITAR PERFIL ═══ -->
+<div id="profile-modal" class="modal-overlay hidden">
+  <div class="modal-box modal-box-wide">
+    <div class="modal-header-row"><h2>✏️ Editar Perfil</h2><button class="modal-close" onclick="closeModal('profile-modal')">✕</button></div>
+    <div class="modal-body">
+      <div class="photo-upload-area">
+        <div class="photo-preview" id="profile-photo-preview">U</div>
+        <div class="photo-upload-actions">
+          <label class="btn-secondary" for="photo-file-input">📷 Alterar Foto</label>
+          <input type="file" id="photo-file-input" accept="image/*" class="hidden" onchange="handlePhotoUpload(this)">
+          <button class="btn-ghost danger small" onclick="removePhoto()">🗑️ Remover</button>
+        </div>
+        <small class="form-hint">JPG, PNG • Máx. 5MB</small>
+      </div>
+      <div class="form-section">
+        <div class="section-title">📋 Dados Pessoais</div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Nome</label><input type="text" id="profile-name" class="form-input"></div>
+          <div class="form-group"><label class="form-label">E-mail</label><input type="email" id="profile-email" class="form-input"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Telefone</label><input type="tel" id="profile-phone" class="form-input"></div>
+          <div class="form-group"><label class="form-label">Cidade</label><input type="text" id="profile-city" class="form-input"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Bio</label><textarea id="profile-bio" class="form-input" rows="2"></textarea></div>
+      </div>
+      <div id="profile-pro-fields" class="hidden">
+        <div class="form-section">
+          <div class="section-title">💼 Dados Profissionais</div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">WhatsApp Profissional</label><div id="ddi-profile-whatsapp-container"></div></div>
+            <div class="form-group"><label class="form-label">Especialidade</label><input type="text" id="profile-specialty" class="form-input"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Valor/Hora (R$)</label><input type="number" id="profile-hourly" class="form-input"></div>
+            <div class="form-group"><label class="form-label">Disponibilidade</label>
+              <select id="profile-availability" class="form-input"><option value="">Selecione</option><option>Tempo Integral</option><option>Meio Período</option><option>Fins de Semana</option><option>24/7</option><option>Sob Demanda</option></select>
+            </div>
+          </div>
+          <div class="form-group"><label class="form-label">Localização</label><input type="text" id="profile-location" class="form-input" placeholder="Cidade, Estado"></div>
+          <div class="form-group"><label class="form-label">Descrição</label><textarea id="profile-description" class="form-input" rows="3"></textarea></div>
+        </div>
+      </div>
+      <button class="btn-primary w-full" onclick="updateProfile()">💾 Salvar Alterações</button>
+      <div id="profile-message" class="form-message"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL EXCLUIR CONTA ═══ -->
+<div id="delete-confirm-modal" class="modal-overlay hidden">
+  <div class="modal-box" style="max-width:420px">
+    <div class="modal-header-row"><h2>🗑️ Excluir Conta</h2><button class="modal-close" onclick="closeModal('delete-confirm-modal')">✕</button></div>
+    <div class="modal-body">
+      <div style="text-align:center;padding:1rem 0 1.5rem">
+        <div style="font-size:3rem;margin-bottom:1rem">⚠️</div>
+        <p style="font-weight:700;font-size:1rem;margin-bottom:.5rem">Tem certeza que deseja excluir sua conta?</p>
+        <p style="font-size:.88rem;color:var(--text-2);line-height:1.6">Esta ação é <strong>permanente e irreversível</strong>. Todos seus dados serão removidos.</p>
+      </div>
+      <div style="display:flex;gap:.8rem">
+        <button class="btn-secondary w-full" onclick="closeModal('delete-confirm-modal')">Cancelar</button>
+        <button onclick="deleteAccount()" style="flex:1;background:#ef4444;color:#fff;border:none;border-radius:10px;padding:.75rem;font-family:var(--font);font-weight:700;font-size:.9rem;cursor:pointer">🗑️ Sim, excluir</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ FAB ═══ -->
+<div class="fab-container" id="fab-container">
+  <div class="fab-menu" id="fab-menu">
+    <button class="fab-item fab-support" onclick="openSupportModal()"><span class="fab-icon">💬</span><span class="fab-label">Suporte</span></button>
+    <button class="fab-item fab-donate"  onclick="openDonationModal()"><span class="fab-icon">❤️</span><span class="fab-label">Apoiar</span></button>
+  </div>
+  <button class="fab-main" id="fab-main" onclick="toggleFAB()"><span class="fab-main-icon" id="fab-main-icon">❓</span></button>
+</div>
+
+<!-- ═══ MODAL SUPORTE ═══ -->
+<div id="support-modal" class="modal-overlay hidden">
+  <div class="modal-box">
+    <div class="modal-header-row"><h2>💬 Falar com o Suporte</h2><button class="modal-close" onclick="closeModal('support-modal')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Nome</label><input type="text" id="support-name" class="form-input"></div>
+      <div class="form-group" style="margin-top:.6rem"><label class="form-label">E-mail</label><input type="email" id="support-email" class="form-input"></div>
+      <div class="form-group" style="margin-top:.6rem"><label class="form-label">Assunto</label>
+        <select id="support-subject" class="form-input"><option>❓ Dúvida geral</option><option>🐛 Problema técnico</option><option>🔐 Conta e acesso</option><option>⚠️ Reclamação</option><option>💡 Sugestão</option></select>
+      </div>
+      <div class="form-group" style="margin-top:.6rem"><label class="form-label">Mensagem</label><textarea id="support-message" class="form-input" rows="4" placeholder="Descreva sua dúvida..."></textarea></div>
+      <button class="btn-primary w-full" style="margin-top:1rem" onclick="sendSupportMessage()">Enviar via WhatsApp</button>
+      <div id="support-msg" class="form-message"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL DOAÇÃO ═══ -->
+<div id="donation-modal" class="modal-overlay hidden">
+  <div class="modal-box">
+    <div class="modal-header-row"><h2>❤️ Apoiar o Avalia.Serv</h2><button class="modal-close" onclick="closeModal('donation-modal')">✕</button></div>
+    <div class="modal-body">
+      <p style="font-size:.88rem;color:var(--text-2);margin-bottom:1rem">Qualquer valor nos ajuda a manter os servidores e melhorar a plataforma 💙</p>
+      <div class="donation-grid">
+        <button class="donation-option selected" onclick="selectDonation(this,5)"><span class="donation-amount">R$ 5</span><span class="donation-desc">☕ Um café</span></button>
+        <button class="donation-option" onclick="selectDonation(this,10)"><span class="donation-amount">R$ 10</span><span class="donation-desc">🍕 Uma fatia</span></button>
+        <button class="donation-option" onclick="selectDonation(this,25)"><span class="donation-amount">R$ 25</span><span class="donation-desc">🚀 Booster</span></button>
+        <button class="donation-option" onclick="selectDonation(this,50)"><span class="donation-amount">R$ 50</span><span class="donation-desc">⭐ Herói</span></button>
+      </div>
+      <div style="margin:.8rem 0"><label class="form-label">Ou outro valor (R$)</label><input type="number" id="donation-custom-value" class="form-input" placeholder="Ex: 15" min="1" oninput="selectDonation(null,this.value);document.querySelectorAll('.donation-option').forEach(o=>o.classList.remove('selected'))"></div>
+      <div style="text-align:center;font-weight:700;color:var(--primary);margin-bottom:1rem">Valor: <span id="donation-amount-label">R$ 5,00</span></div>
+      <button class="btn-primary w-full" onclick="processDonation()" style="background:linear-gradient(135deg,#e91e8c,#ff6b35)">❤️ Apoiar com PIX</button>
+      <div id="donation-msg" class="form-message" style="margin-top:.8rem"></div>
+    </div>
+  </div>
+</div>
+
+<script src="js/db.js"></script>
+<script src="js/state.js"></script>
+<script src="js/demo.js"></script>
+<script src="js/phone.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/theme.js"></script>
+<script src="js/modals.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/builder.js"></script>
+<script src="js/sidebar.js"></script>
+<script src="js/views.js"></script>
+<script src="js/sections.js"></script>
+<script src="js/profcards.js"></script>
+<script src="js/profmodal.js"></script>
+<script src="js/clientmodal.js"></script>
+<script src="js/favorites.js"></script>
+<script src="js/requests.js"></script>
+<script src="js/chat.js"></script>
+<script src="js/profile.js"></script>
+<script src="js/photo.js"></script>
+<script src="js/support.js"></script>
+<script src="js/donation.js"></script>
+<script src="js/fab.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
